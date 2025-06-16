@@ -1,5 +1,9 @@
-import app from "@/app";
-import { env } from "@/configs/envConfig";
+import app from './app';
+import { env } from './configs/envConfig';
+import connectDB from './configs/database';
+
+// Connect to database
+connectDB();
 
 const server = app.listen(env.PORT, () => {
   console.log(
