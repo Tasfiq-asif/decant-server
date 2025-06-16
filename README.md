@@ -16,12 +16,10 @@ This guide explains how to run the Decant Perfume backend server inside a Docker
    cd <project-folder>
    ```
 
+```bash
 docker build -f Dockerfile.dev -t decant-server-dev .
+```
 
-docker run -it --rm \
- --name decant-dev \
- -p 4000:4000 \
- -v $(pwd):/app \
- -v /app/node_modules \
- -e PORT=4000 \
- decant-server-dev
+```bash
+docker run -it --rm --name decant-dev -p 4000:4000 -v $(pwd):/app -v /app/node_modules -e PORT=4000  decant-server-dev
+```
