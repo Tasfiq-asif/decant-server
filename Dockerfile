@@ -1,22 +1,30 @@
-# Build stage
-FROM node:22 AS builder
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Use official Node.js LTS image
+FROM node:20-alpine
 
 WORKDIR /app
+
+# Copy package.json and lock files
+COPY package*.json ./
+COPY pnpm-lock.yaml* ./
+COPY tsconfig*.json ./
+
+RUN npm config set registry https://registry.npmmirror.com
+RUN npm install -g pnpm
+RUN pnpm config set registry https://registry.npmmirror.com
+RUN pnpm install
+
+# Copy all source files and configs BEFORE building
 COPY . .
 
-RUN pnpm install
+# Debug: list important files before build
+RUN ls -l tsconfig.build.json src/server.ts
+
+# Build TypeScript
 RUN pnpm run build
 
-# Production stage
-FROM node:22-slim
+# Debug: check build output files
+RUN ls -l dist
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+EXPOSE 4000
 
-WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod
-
-CMD ["node", "dist/server.js"]
+CMD ["pnpm", "run", "start:prod"]
