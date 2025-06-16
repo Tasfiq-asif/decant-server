@@ -1,9 +1,20 @@
 import { Router } from 'express';
+import { UserRoutes } from '../app/modules/user/user.route';
+import { AuthRoutes } from '../app/modules/auth/auth.route';
 
-const indexRouter = Router();
+const router = Router();
 
-indexRouter.get('/', (_req, res) => {
-  res.send('Hello from Express + TypeScript!');
-});
+const moduleRoutes = [
+  {
+    path: '/auth',
+    route: AuthRoutes,
+  },
+  {
+    path: '/users',
+    route: UserRoutes,
+  },
+];
 
-export default indexRouter;
+moduleRoutes.forEach((route) => router.use(route.path, route.route));
+
+export default router;
