@@ -5,8 +5,8 @@ export interface TUser {
   name: string;
   email: string;
   password: string;
-  role: keyof typeof USER_ROLE;
-  status: keyof typeof USER_STATUS;
+  role: string;
+  status: string;
   isDeleted: boolean;
   profileImg?: string;
   createdAt?: Date;
@@ -26,7 +26,7 @@ export interface TRegisterUser {
 
 export interface TAuthUser {
   userId: string;
-  role: keyof typeof USER_ROLE;
+  role: string;
   iat: number;
   exp: number;
 } 

@@ -62,17 +62,4 @@ userSchema.methods.toJSON = function () {
   return userObj;
 };
 
-// Static method to check if user exists
-userSchema.statics.isUserExistsByEmail = async function (email: string) {
-  return await User.findOne({ email, isDeleted: false }).select('+password');
-};
-
-// Instance method to check password
-userSchema.methods.isPasswordMatched = async function (
-  plainTextPassword: string,
-  hashedPassword: string
-) {
-  return await bcrypt.compare(plainTextPassword, hashedPassword);
-};
-
 export const User = model<TUser>('User', userSchema); 
