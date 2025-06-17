@@ -20,7 +20,7 @@ router.get("/", auth(USER_ROLE.ADMIN), UserControllers.getAllUsers);
 router.delete(
   "/:id",
   auth(USER_ROLE.ADMIN),
-  validateRequest(UserValidation.getUserByIdValidationSchema),
+  validateRequest(UserValidation.deleteUserValidationSchema),
   UserControllers.deleteUser
 );
 
@@ -35,7 +35,6 @@ router.get(
 router.patch(
   "/:id",
   auth(USER_ROLE.USER, USER_ROLE.ADMIN),
-  validateRequest(UserValidation.getUserByIdValidationSchema),
   validateRequest(UserValidation.updateUserValidationSchema),
   UserControllers.updateUser
 );

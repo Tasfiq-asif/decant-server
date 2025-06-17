@@ -38,6 +38,13 @@ const createUserValidationSchema = z.object({
 });
 
 const updateUserValidationSchema = z.object({
+  params: z.object({
+    id: z
+      .string({
+        required_error: "User ID is required",
+      })
+      .min(1, "User ID cannot be empty"),
+  }),
   body: z.object({
     name: z
       .string()
@@ -65,8 +72,19 @@ const getUserByIdValidationSchema = z.object({
   }),
 });
 
+const deleteUserValidationSchema = z.object({
+  params: z.object({
+    id: z
+      .string({
+        required_error: "User ID is required",
+      })
+      .min(1, "User ID cannot be empty"),
+  }),
+});
+
 export const UserValidation = {
   createUserValidationSchema,
   updateUserValidationSchema,
   getUserByIdValidationSchema,
+  deleteUserValidationSchema,
 };

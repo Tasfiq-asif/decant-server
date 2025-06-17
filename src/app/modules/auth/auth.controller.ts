@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import catchAsync from '../../utils/catchAsync';
-import sendResponse from '../../utils/sendResponse';
-import { AuthServices } from './auth.service';
-import { HTTP_STATUS } from '../../constants';
+import { Request, Response } from "express";
+import catchAsync from "../../utils/catchAsync";
+import sendResponse from "../../utils/sendResponse";
+import { AuthServices } from "./auth.service";
+import { HTTP_STATUS } from "../../constants";
 
 const register = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.registerUser(req.body);
@@ -10,7 +10,7 @@ const register = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.CREATED,
     success: true,
-    message: 'User registered successfully',
+    message: "User registered successfully",
     data: result,
   });
 });
@@ -21,7 +21,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'User logged in successfully',
+    message: "User logged in successfully",
     data: result,
   });
 });
@@ -33,7 +33,19 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'Password changed successfully',
+    message: "Password changed successfully",
+    data: result,
+  });
+});
+
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  const result = await AuthServices.refreshAccessToken(refreshToken);
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Token refreshed successfully",
     data: result,
   });
 });
@@ -42,4 +54,5 @@ export const AuthControllers = {
   register,
   login,
   changePassword,
-}; 
+  refreshToken,
+};

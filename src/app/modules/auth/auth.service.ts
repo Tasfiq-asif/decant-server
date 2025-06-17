@@ -1,16 +1,24 @@
-import bcrypt from 'bcryptjs';
-import AppError from '../../errors/AppError';
-import { User } from '../user/user.model';
-import { TLoginCredentials, TRegisterPayload, TChangePassword } from './auth.interface';
-import { HTTP_STATUS, USER_ROLE } from '../../constants';
-import { createToken } from '../../utils/auth';
-import { env } from '../../../configs/envConfig';
+import bcrypt from "bcryptjs";
+import AppError from "../../errors/AppError";
+import { User } from "../user/user.model";
+import {
+  TLoginCredentials,
+  TRegisterPayload,
+  TChangePassword,
+} from "./auth.interface";
+import { HTTP_STATUS, USER_ROLE } from "../../constants";
+import { createToken } from "../../utils/auth";
+import { env } from "../../../configs/envConfig";
+import jwt from "jsonwebtoken";
 
 const registerUser = async (payload: TRegisterPayload) => {
   // Check if user already exists
   const existingUser = await User.findOne({ email: payload.email });
   if (existingUser) {
-    throw new AppError(HTTP_STATUS.CONFLICT, 'User already exists with this email');
+    throw new AppError(
+      HTTP_STATUS.CONFLICT,
+      "User already exists with this email"
+    );
   }
 
   // Create user with default role
@@ -25,19 +33,22 @@ const registerUser = async (payload: TRegisterPayload) => {
 
 const loginUser = async (payload: TLoginCredentials) => {
   // Check if user exists
-  const user = await User.findOne({ 
-    email: payload.email, 
-    isDeleted: false 
-  }).select('+password');
+  const user = await User.findOne({
+    email: payload.email,
+    isDeleted: false,
+  }).select("+password");
 
   if (!user) {
-    throw new AppError(HTTP_STATUS.NOT_FOUND, 'User not found');
+    throw new AppError(HTTP_STATUS.NOT_FOUND, "User not found");
   }
 
   // Check if password matches
-  const isPasswordMatched = await bcrypt.compare(payload.password, user.password);
+  const isPasswordMatched = await bcrypt.compare(
+    payload.password,
+    user.password
+  );
   if (!isPasswordMatched) {
-    throw new AppError(HTTP_STATUS.UNAUTHORIZED, 'Invalid credentials');
+    throw new AppError(HTTP_STATUS.UNAUTHORIZED, "Invalid credentials");
   }
 
   // Create JWT tokens
@@ -70,14 +81,11 @@ const loginUser = async (payload: TLoginCredentials) => {
   };
 };
 
-const changePassword = async (
-  userId: string,
-  payload: TChangePassword
-) => {
+const changePassword = async (userId: string, payload: TChangePassword) => {
   // Check if user exists
-  const user = await User.findById(userId).select('+password');
+  const user = await User.findById(userId).select("+password");
   if (!user) {
-    throw new AppError(HTTP_STATUS.NOT_FOUND, 'User not found');
+    throw new AppError(HTTP_STATUS.NOT_FOUND, "User not found");
   }
 
   // Check if old password matches
@@ -86,7 +94,7 @@ const changePassword = async (
     user.password
   );
   if (!isOldPasswordMatched) {
-    throw new AppError(HTTP_STATUS.UNAUTHORIZED, 'Old password is incorrect');
+    throw new AppError(HTTP_STATUS.UNAUTHORIZED, "Old password is incorrect");
   }
 
   // Hash new password and update
@@ -102,8 +110,48 @@ const changePassword = async (
   return null;
 };
 
+const refreshAccessToken = async (refreshToken: string) => {
+  try {
+    // Verify the refresh token
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as any;
+
+    // Check if user still exists
+    const user = await User.findById(decoded.userId);
+    if (!user || user.isDeleted) {
+      throw new AppError(HTTP_STATUS.UNAUTHORIZED, "User not found");
+    }
+
+    // Create new access token
+    const jwtPayload = {
+      userId: user._id!.toString(),
+      role: user.role,
+    };
+
+    const newAccessToken = createToken(
+      jwtPayload,
+      env.JWT_ACCESS_SECRET,
+      env.JWT_ACCESS_EXPIRES_IN
+    );
+
+    // Optionally create new refresh token
+    const newRefreshToken = createToken(
+      jwtPayload,
+      env.JWT_REFRESH_SECRET,
+      env.JWT_REFRESH_EXPIRES_IN
+    );
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch (error) {
+    throw new AppError(HTTP_STATUS.UNAUTHORIZED, "Invalid refresh token");
+  }
+};
+
 export const AuthServices = {
   registerUser,
   loginUser,
   changePassword,
-}; 
+  refreshAccessToken,
+};
