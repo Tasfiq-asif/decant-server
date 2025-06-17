@@ -1,4 +1,5 @@
 import multer from "multer";
+// @ts-ignore - No types available for multer-storage-cloudinary
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../../configs/cloudinary";
 import AppError from "../errors/AppError";

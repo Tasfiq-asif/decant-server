@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { ProductService } from "./product.service";
 import { HTTP_STATUS } from "../../constants";
+import { deleteFromCloudinary, extractPublicId } from "../../utils/fileUpload";
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId!;
@@ -134,6 +135,83 @@ const getRelatedProducts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// File upload controllers
+const uploadProductImages = catchAsync(async (req: Request, res: Response) => {
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+  const uploadedFiles: { images: string[]; thumbnail?: string } = {
+    images: [],
+  };
+
+  // Process uploaded images
+  if (files.images) {
+    uploadedFiles.images = files.images.map((file) => file.path);
+  }
+
+  // Process uploaded thumbnail
+  if (files.thumbnail && files.thumbnail[0]) {
+    uploadedFiles.thumbnail = files.thumbnail[0].path;
+  }
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Images uploaded successfully",
+    data: uploadedFiles,
+  });
+});
+
+const uploadSingleImage = catchAsync(async (req: Request, res: Response) => {
+  const file = req.file;
+
+  if (!file) {
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+      success: false,
+      message: "No image file provided",
+      data: null,
+    });
+    return;
+  }
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Image uploaded successfully",
+    data: {
+      url: file.path,
+      publicId: file.filename,
+    },
+  });
+});
+
+const deleteProductImage = catchAsync(async (req: Request, res: Response) => {
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+      success: false,
+      message: "Image URL is required",
+      data: null,
+    });
+    return;
+  }
+
+  // Extract public ID from Cloudinary URL
+  const publicId = extractPublicId(imageUrl);
+
+  // Delete from Cloudinary
+  await deleteFromCloudinary(publicId);
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Image deleted successfully",
+    data: null,
+  });
+});
+
 export const ProductController = {
   createProduct,
   getAllProducts,
@@ -145,4 +223,7 @@ export const ProductController = {
   getFeaturedProducts,
   getProductsByBrand,
   getRelatedProducts,
+  uploadProductImages,
+  uploadSingleImage,
+  deleteProductImage,
 };

@@ -7,6 +7,7 @@ import {
 } from "./product.interface";
 import AppError from "../../errors/AppError";
 import { HTTP_STATUS } from "../../constants";
+import { deleteFromCloudinary, extractPublicId } from "../../utils/fileUpload";
 
 const createProduct = async (
   payload: TCreateProduct,
@@ -41,6 +42,58 @@ const createProduct = async (
     throw new AppError(
       HTTP_STATUS.INTERNAL_SERVER_ERROR,
       "Failed to create product"
+    );
+  }
+};
+
+const createProductWithImages = async (
+  payload: TCreateProduct,
+  files: { images?: Express.Multer.File[]; thumbnail?: Express.Multer.File[] },
+  createdBy: string
+): Promise<TProduct> => {
+  try {
+    // Check if product with same name and brand already exists
+    const existingProduct = await Product.findOne({
+      name: payload.name,
+      brand: payload.brand,
+      isDeleted: false,
+    });
+
+    if (existingProduct) {
+      throw new AppError(
+        HTTP_STATUS.CONFLICT,
+        "Product with this name and brand already exists"
+      );
+    }
+
+    // Process uploaded images
+    const images: string[] = [];
+    let thumbnail = "";
+
+    if (files.images) {
+      images.push(...files.images.map((file) => file.path));
+    }
+
+    if (files.thumbnail && files.thumbnail[0]) {
+      thumbnail = files.thumbnail[0].path;
+    }
+
+    const productData = {
+      ...payload,
+      images: images.length > 0 ? images : payload.images,
+      thumbnail: thumbnail || payload.thumbnail,
+      createdBy,
+    };
+
+    const result = await Product.create(productData);
+    return result;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError(
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      "Failed to create product with images"
     );
   }
 };
@@ -245,15 +298,35 @@ const updateProduct = async (
 
 const deleteProduct = async (id: string): Promise<void> => {
   try {
-    const result = await Product.findByIdAndUpdate(
-      id,
-      { isDeleted: true },
-      { new: true }
-    );
+    const product = await Product.findOne({ _id: id, isDeleted: false });
 
-    if (!result) {
+    if (!product) {
       throw new AppError(HTTP_STATUS.NOT_FOUND, "Product not found");
     }
+
+    // Delete images from Cloudinary
+    try {
+      // Delete main images
+      if (product.images && product.images.length > 0) {
+        const deletePromises = product.images.map(async (imageUrl) => {
+          const publicId = extractPublicId(imageUrl);
+          return deleteFromCloudinary(publicId);
+        });
+        await Promise.all(deletePromises);
+      }
+
+      // Delete thumbnail
+      if (product.thumbnail) {
+        const thumbnailPublicId = extractPublicId(product.thumbnail);
+        await deleteFromCloudinary(thumbnailPublicId);
+      }
+    } catch (cloudinaryError) {
+      console.error("Error deleting images from Cloudinary:", cloudinaryError);
+      // Continue with product deletion even if image deletion fails
+    }
+
+    // Soft delete the product
+    await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

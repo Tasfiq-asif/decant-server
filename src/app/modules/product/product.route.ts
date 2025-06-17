@@ -4,6 +4,7 @@ import { ProductValidation } from "./product.validation";
 import validateRequest from "../../../middlewares/validateRequest";
 import auth from "../../../middlewares/auth";
 import { USER_ROLE } from "../../constants";
+import { uploadFields, uploadSingle } from "../../utils/fileUpload";
 
 const router = Router();
 
@@ -23,6 +24,27 @@ router.get("/:id/related", ProductController.getRelatedProducts);
 router.get("/slug/:slug", ProductController.getProductBySlug);
 
 router.get("/:id", ProductController.getProductById);
+
+// File upload routes (Admin only)
+router.post(
+  "/upload/images",
+  auth(USER_ROLE.ADMIN),
+  uploadFields,
+  ProductController.uploadProductImages
+);
+
+router.post(
+  "/upload/single",
+  auth(USER_ROLE.ADMIN),
+  uploadSingle,
+  ProductController.uploadSingleImage
+);
+
+router.delete(
+  "/upload/delete",
+  auth(USER_ROLE.ADMIN),
+  ProductController.deleteProductImage
+);
 
 // Admin only routes
 router.post(
