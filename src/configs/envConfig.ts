@@ -31,6 +31,11 @@ const JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET || "your-refresh-secret";
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "1y";
 
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "";
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || "";
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || "";
+
 export const env = {
   PORT,
   HOST,
@@ -41,4 +46,7 @@ export const env = {
   JWT_ACCESS_EXPIRES_IN,
   JWT_REFRESH_SECRET,
   JWT_REFRESH_EXPIRES_IN,
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET,
 };
