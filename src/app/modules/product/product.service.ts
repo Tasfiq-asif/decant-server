@@ -14,6 +14,12 @@ const createProduct = async (
   createdBy: string
 ): Promise<TProduct> => {
   try {
+    console.log(
+      "Service: Creating product with payload:",
+      JSON.stringify(payload, null, 2)
+    );
+    console.log("Service: Created by user:", createdBy);
+
     // Check if product with same name and brand already exists
     const existingProduct = await Product.findOne({
       name: payload.name,
@@ -30,18 +36,33 @@ const createProduct = async (
 
     const productData = {
       ...payload,
+      thumbnail: payload.thumbnail || payload.images[0], // Use first image as thumbnail if not provided
       createdBy,
     };
 
+    console.log(
+      "Service: Final product data:",
+      JSON.stringify(productData, null, 2)
+    );
+
     const result = await Product.create(productData);
+    console.log("Service: Product created successfully:", result._id);
     return result;
   } catch (error) {
+    console.error("Service: Error creating product:", error);
     if (error instanceof AppError) {
       throw error;
     }
+    // Log the actual error details
+    if (error instanceof Error) {
+      console.error("Service: Error message:", error.message);
+      console.error("Service: Error stack:", error.stack);
+    }
     throw new AppError(
       HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      "Failed to create product"
+      `Failed to create product: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 };
@@ -104,8 +125,6 @@ const getAllProducts = async (query: TProductQuery) => {
       searchTerm,
       category,
       brand,
-      gender,
-      fragranceType,
       minPrice,
       maxPrice,
       status = "active",
@@ -130,22 +149,14 @@ const getAllProducts = async (query: TProductQuery) => {
       filter.brand = { $regex: brand, $options: "i" };
     }
 
-    if (gender) {
-      filter.gender = gender;
-    }
-
-    if (fragranceType) {
-      filter.fragranceType = fragranceType;
-    }
-
     // Price range filter
     if (minPrice !== undefined || maxPrice !== undefined) {
-      filter["decantSizes.price"] = {};
+      filter.price = {};
       if (minPrice !== undefined) {
-        filter["decantSizes.price"].$gte = minPrice;
+        filter.price.$gte = minPrice;
       }
       if (maxPrice !== undefined) {
-        filter["decantSizes.price"].$lte = maxPrice;
+        filter.price.$lte = maxPrice;
       }
     }
 
@@ -159,11 +170,7 @@ const getAllProducts = async (query: TProductQuery) => {
 
     // Build sort object
     const sort: any = {};
-    if (sortBy === "price") {
-      sort["decantSizes.price"] = sortOrder === "asc" ? 1 : -1;
-    } else {
-      sort[sortBy] = sortOrder === "asc" ? 1 : -1;
-    }
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
 
     // Execute query
     const products = await Product.find(filter)
@@ -242,25 +249,25 @@ const updateProduct = async (
   updatedBy: string
 ): Promise<TProduct> => {
   try {
-    const product = await Product.findOne({ _id: id, isDeleted: false });
+    const existingProduct = await Product.findOne({
+      _id: id,
+      isDeleted: false,
+    });
 
-    if (!product) {
+    if (!existingProduct) {
       throw new AppError(HTTP_STATUS.NOT_FOUND, "Product not found");
     }
 
-    // Check if updating name/brand would create a duplicate
+    // Check for duplicate name and brand (excluding current product)
     if (payload.name || payload.brand) {
-      const nameToCheck = payload.name || product.name;
-      const brandToCheck = payload.brand || product.brand;
-
-      const existingProduct = await Product.findOne({
-        name: nameToCheck,
-        brand: brandToCheck,
+      const duplicateProduct = await Product.findOne({
+        name: payload.name || existingProduct.name,
+        brand: payload.brand || existingProduct.brand,
         _id: { $ne: id },
         isDeleted: false,
       });
 
-      if (existingProduct) {
+      if (duplicateProduct) {
         throw new AppError(
           HTTP_STATUS.CONFLICT,
           "Product with this name and brand already exists"
@@ -280,11 +287,7 @@ const updateProduct = async (
       .populate("createdBy", "name email")
       .populate("updatedBy", "name email");
 
-    if (!result) {
-      throw new AppError(HTTP_STATUS.NOT_FOUND, "Product not found");
-    }
-
-    return result;
+    return result!;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -298,35 +301,27 @@ const updateProduct = async (
 
 const deleteProduct = async (id: string): Promise<void> => {
   try {
-    const product = await Product.findOne({ _id: id, isDeleted: false });
+    const existingProduct = await Product.findOne({
+      _id: id,
+      isDeleted: false,
+    });
 
-    if (!product) {
+    if (!existingProduct) {
       throw new AppError(HTTP_STATUS.NOT_FOUND, "Product not found");
     }
 
     // Delete images from Cloudinary
-    try {
-      // Delete main images
-      if (product.images && product.images.length > 0) {
-        const deletePromises = product.images.map(async (imageUrl) => {
-          const publicId = extractPublicId(imageUrl);
-          return deleteFromCloudinary(publicId);
-        });
-        await Promise.all(deletePromises);
-      }
+    if (existingProduct.images && existingProduct.images.length > 0) {
+      const deletePromises = existingProduct.images.map((imageUrl) => {
+        const publicId = extractPublicId(imageUrl);
+        return deleteFromCloudinary(publicId);
+      });
 
-      // Delete thumbnail
-      if (product.thumbnail) {
-        const thumbnailPublicId = extractPublicId(product.thumbnail);
-        await deleteFromCloudinary(thumbnailPublicId);
-      }
-    } catch (cloudinaryError) {
-      console.error("Error deleting images from Cloudinary:", cloudinaryError);
-      // Continue with product deletion even if image deletion fails
+      await Promise.all(deletePromises);
     }
 
-    // Soft delete the product
-    await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    // Soft delete
+    await Product.findByIdAndUpdate(id, { isDeleted: true });
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -338,50 +333,13 @@ const deleteProduct = async (id: string): Promise<void> => {
   }
 };
 
-const updateProductStock = async (
-  id: string,
-  sizeUpdates: { size: string; newStock: number }[]
-): Promise<TProduct> => {
-  try {
-    const product = await Product.findOne({ _id: id, isDeleted: false });
-
-    if (!product) {
-      throw new AppError(HTTP_STATUS.NOT_FOUND, "Product not found");
-    }
-
-    // Update stock for specific sizes
-    sizeUpdates.forEach((update) => {
-      const sizeIndex = product.decantSizes.findIndex(
-        (size) => size.size === update.size
-      );
-
-      if (sizeIndex !== -1) {
-        product.decantSizes[sizeIndex].stock = update.newStock;
-        product.decantSizes[sizeIndex].isAvailable = update.newStock > 0;
-      }
-    });
-
-    const result = await product.save();
-    return result;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError(
-      HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      "Failed to update product stock"
-    );
-  }
-};
-
 const getFeaturedProducts = async (limit: number = 8): Promise<TProduct[]> => {
   try {
     const result = await Product.find({
-      isDeleted: false,
       status: "active",
-      totalStock: { $gt: 0 },
+      isDeleted: false,
     })
-      .sort({ averageRating: -1, totalReviews: -1 })
+      .sort({ averageRating: -1, createdAt: -1 })
       .limit(limit)
       .populate("createdBy", "name email");
 
@@ -401,11 +359,12 @@ const getProductsByBrand = async (
   try {
     const result = await Product.find({
       brand: { $regex: brand, $options: "i" },
-      isDeleted: false,
       status: "active",
+      isDeleted: false,
     })
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .limit(limit)
+      .populate("createdBy", "name email");
 
     return result;
   } catch (error) {
@@ -425,11 +384,12 @@ const getRelatedProducts = async (
     const result = await Product.find({
       _id: { $ne: productId },
       category,
-      isDeleted: false,
       status: "active",
+      isDeleted: false,
     })
-      .sort({ averageRating: -1 })
-      .limit(limit);
+      .sort({ averageRating: -1, createdAt: -1 })
+      .limit(limit)
+      .populate("createdBy", "name email");
 
     return result;
   } catch (error) {
@@ -447,7 +407,6 @@ export const ProductService = {
   getProductBySlug,
   updateProduct,
   deleteProduct,
-  updateProductStock,
   getFeaturedProducts,
   getProductsByBrand,
   getRelatedProducts,

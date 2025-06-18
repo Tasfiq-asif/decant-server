@@ -6,10 +6,10 @@ import {
 } from "../../constants";
 
 export interface TDecantSize {
-  size: string;
+  size: string; // e.g., "5ml", "10ml", "15ml"
   price: number;
   stock: number;
-  isAvailable: boolean;
+  isAvailable?: boolean;
 }
 
 export interface TFragranceNotes {
@@ -24,38 +24,16 @@ export interface TProduct {
   brand: string;
   description: string;
   category: string;
-  fragranceType: string;
-  gender: "men" | "women" | "unisex";
-
-  // Fragrance details
-  fragranceNotes: TFragranceNotes;
-  longevity: number; // 1-10 scale
-  sillage: number; // 1-10 scale
-  projection: number; // 1-10 scale
-
-  // Product images
+  decantSizes: TDecantSize[]; // Multiple volumes with different prices
   images: string[];
-  thumbnail: string;
-
-  // Decant sizes and pricing
-  decantSizes: TDecantSize[];
-
-  // Product status and inventory
-  status: string;
-  isDeleted: boolean;
-  totalStock: number;
-
-  // SEO and metadata
-  slug: string;
-  tags: string[];
-  metaTitle?: string;
-  metaDescription?: string;
-
-  // Ratings and reviews
+  thumbnail?: string;
+  status?: string;
+  isDeleted?: boolean;
+  slug?: string;
+  tags?: string[];
+  totalStock?: number; // Calculated from all decant sizes
   averageRating?: number;
   totalReviews?: number;
-
-  // Admin fields
   createdBy?: string;
   updatedBy?: string;
   createdAt?: Date;
@@ -67,18 +45,10 @@ export interface TCreateProduct {
   brand: string;
   description: string;
   category: string;
-  fragranceType: string;
-  gender: "men" | "women" | "unisex";
-  fragranceNotes: TFragranceNotes;
-  longevity: number;
-  sillage: number;
-  projection: number;
-  images: string[];
-  thumbnail: string;
   decantSizes: TDecantSize[];
-  tags: string[];
-  metaTitle?: string;
-  metaDescription?: string;
+  images: string[];
+  thumbnail?: string;
+  tags?: string[];
 }
 
 export interface TUpdateProduct {
@@ -86,27 +56,17 @@ export interface TUpdateProduct {
   brand?: string;
   description?: string;
   category?: string;
-  fragranceType?: string;
-  gender?: "men" | "women" | "unisex";
-  fragranceNotes?: TFragranceNotes;
-  longevity?: number;
-  sillage?: number;
-  projection?: number;
+  decantSizes?: TDecantSize[];
   images?: string[];
   thumbnail?: string;
-  decantSizes?: TDecantSize[];
   status?: string;
   tags?: string[];
-  metaTitle?: string;
-  metaDescription?: string;
 }
 
 export interface TProductQuery {
   searchTerm?: string;
   category?: string;
   brand?: string;
-  gender?: string;
-  fragranceType?: string;
   minPrice?: number;
   maxPrice?: number;
   status?: string;

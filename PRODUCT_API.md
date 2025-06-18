@@ -80,64 +80,84 @@ GET /api/products/slug/:slug
 GET /api/products/:id/related?category=mens_fragrance&limit=6
 ```
 
-### 7. Create Product (Admin Only)
+### 7. Upload Product Images (Admin Only)
 
 ```
-POST /api/products
+POST /api/products/upload/images
 Authorization: Bearer <admin_token>
-Content-Type: application/json
+Content-Type: multipart/form-data
 ```
 
-**Request Body:**
+**Form Fields:**
+
+- `images`: Array of image files (max 8 files, 5MB each)
+- `thumbnail`: Single thumbnail image (optional)
+
+**Response:**
 
 ```json
 {
-  "name": "Aventus",
-  "brand": "Creed",
-  "description": "A sophisticated blend of fruity and smoky notes...",
-  "category": "mens_fragrance",
-  "fragranceType": "eau_de_parfum",
-  "gender": "men",
-  "fragranceNotes": {
-    "top": ["Pineapple", "Bergamot", "Black Currant", "Apple"],
-    "middle": ["Rose", "Dry Birch", "Moroccan Jasmine", "Patchouli"],
-    "base": ["Oak Moss", "Musk", "Ambergris", "Vanilla"]
-  },
-  "longevity": 9,
-  "sillage": 8,
-  "projection": 8,
-  "images": [
-    "https://example.com/aventus-1.jpg",
-    "https://example.com/aventus-2.jpg"
-  ],
-  "thumbnail": "https://example.com/aventus-thumb.jpg",
-  "decantSizes": [
-    {
-      "size": "5ml",
-      "price": 25.0,
-      "stock": 50,
-      "isAvailable": true
-    },
-    {
-      "size": "10ml",
-      "price": 45.0,
-      "stock": 30,
-      "isAvailable": true
-    }
-  ],
-  "tags": ["fruity", "smoky", "masculine", "luxury"],
-  "metaTitle": "Creed Aventus Decant - Premium Fragrance Sample",
-  "metaDescription": "Experience the legendary Creed Aventus with our premium decant service. Fruity, smoky, and sophisticated."
+  "success": true,
+  "message": "Images uploaded successfully",
+  "data": {
+    "images": [
+      "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/decantifume/products/image1.webp",
+      "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/decantifume/products/image2.webp"
+    ],
+    "thumbnail": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/decantifume/products/thumb.webp"
+  }
 }
+```
+
+"name": "Aventus",
+"brand": "Creed",
+"description": "A sophisticated blend of fruity and smoky notes...",
+"category": "mens_fragrance",
+"fragranceType": "eau_de_parfum",
+"gender": "men",
+"fragranceNotes": {
+"top": ["Pineapple", "Bergamot", "Black Currant", "Apple"],
+"middle": ["Rose", "Dry Birch", "Moroccan Jasmine", "Patchouli"],
+"base": ["Oak Moss", "Musk", "Ambergris", "Vanilla"]
+},
+"longevity": 9,
+"sillage": 8,
+"projection": 8,
+"images": [
+"https://example.com/aventus-1.jpg",
+"https://example.com/aventus-2.jpg"
+],
+"thumbnail": "https://example.com/aventus-thumb.jpg",
+"decantSizes": [
+{
+"size": "5ml",
+"price": 25.0,
+"stock": 50,
+"isAvailable": true
+},
+{
+"size": "10ml",
+"price": 45.0,
+"stock": 30,
+"isAvailable": true
+}
+],
+"tags": ["fruity", "smoky", "masculine", "luxury"],
+"metaTitle": "Creed Aventus Decant - Premium Fragrance Sample",
+"metaDescription": "Experience the legendary Creed Aventus with our premium decant service. Fruity, smoky, and sophisticated."
+}
+
 ```
 
 ### 8. Update Product (Admin Only)
 
 ```
+
 PATCH /api/products/:id
 Authorization: Bearer <admin_token>
 Content-Type: application/json
-```
+
+````
 
 **Request Body:** (All fields optional)
 
@@ -147,7 +167,7 @@ Content-Type: application/json
   "status": "active",
   "decantSizes": [...]
 }
-```
+````
 
 ### 9. Delete Product (Admin Only)
 

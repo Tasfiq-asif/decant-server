@@ -3,18 +3,33 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { ProductService } from "./product.service";
 import { HTTP_STATUS } from "../../constants";
-import { deleteFromCloudinary, extractPublicId } from "../../utils/fileUpload";
+import {
+  deleteFromCloudinary,
+  extractPublicId,
+  uploadToCloudinary,
+} from "../../utils/fileUpload";
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId!;
-  const result = await ProductService.createProduct(req.body, userId);
+  try {
+    console.log(
+      "Creating product with data:",
+      JSON.stringify(req.body, null, 2)
+    );
+    const userId = req.user?.userId!;
+    console.log("User ID:", userId);
 
-  sendResponse(res, {
-    statusCode: HTTP_STATUS.CREATED,
-    success: true,
-    message: "Product created successfully",
-    data: result,
-  });
+    const result = await ProductService.createProduct(req.body, userId);
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.CREATED,
+      success: true,
+      message: "Product created successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error in createProduct controller:", error);
+    throw error;
+  }
 });
 
 const getAllProducts = catchAsync(async (req: Request, res: Response) => {
@@ -78,19 +93,6 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateProductStock = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { sizeUpdates } = req.body;
-  const result = await ProductService.updateProductStock(id, sizeUpdates);
-
-  sendResponse(res, {
-    statusCode: HTTP_STATUS.OK,
-    success: true,
-    message: "Product stock updated successfully",
-    data: result,
-  });
-});
-
 const getFeaturedProducts = catchAsync(async (req: Request, res: Response) => {
   const limit = parseInt(req.query.limit as string) || 8;
   const result = await ProductService.getFeaturedProducts(limit);
@@ -145,12 +147,18 @@ const uploadProductImages = catchAsync(async (req: Request, res: Response) => {
 
   // Process uploaded images
   if (files.images) {
-    uploadedFiles.images = files.images.map((file) => file.path);
+    const imagePromises = files.images.map((file) =>
+      uploadToCloudinary(file.buffer, "decantifume/products")
+    );
+    uploadedFiles.images = await Promise.all(imagePromises);
   }
 
   // Process uploaded thumbnail
   if (files.thumbnail && files.thumbnail[0]) {
-    uploadedFiles.thumbnail = files.thumbnail[0].path;
+    uploadedFiles.thumbnail = await uploadToCloudinary(
+      files.thumbnail[0].buffer,
+      "decantifume/products"
+    );
   }
 
   sendResponse(res, {
@@ -174,13 +182,18 @@ const uploadSingleImage = catchAsync(async (req: Request, res: Response) => {
     return;
   }
 
+  // Upload buffer to Cloudinary
+  const imageUrl = await uploadToCloudinary(
+    file.buffer,
+    "decantifume/products"
+  );
+
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
     message: "Image uploaded successfully",
     data: {
-      url: file.path,
-      publicId: file.filename,
+      url: imageUrl,
     },
   });
 });
@@ -219,7 +232,6 @@ export const ProductController = {
   getProductBySlug,
   updateProduct,
   deleteProduct,
-  updateProductStock,
   getFeaturedProducts,
   getProductsByBrand,
   getRelatedProducts,

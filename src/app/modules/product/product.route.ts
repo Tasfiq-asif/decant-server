@@ -50,23 +50,17 @@ router.delete(
 router.post(
   "/",
   auth(USER_ROLE.ADMIN),
-  validateRequest(ProductValidation.createProduct),
+  validateRequest(ProductValidation.createProductValidationSchema),
   ProductController.createProduct
 );
 
 router.patch(
   "/:id",
   auth(USER_ROLE.ADMIN),
-  validateRequest(ProductValidation.updateProduct),
+  validateRequest(ProductValidation.updateProductValidationSchema),
   ProductController.updateProduct
 );
 
 router.delete("/:id", auth(USER_ROLE.ADMIN), ProductController.deleteProduct);
-
-router.patch(
-  "/:id/stock",
-  auth(USER_ROLE.ADMIN),
-  ProductController.updateProductStock
-);
 
 export const ProductRoutes = router;

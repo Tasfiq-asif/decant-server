@@ -1,27 +1,10 @@
 import multer from "multer";
-// @ts-ignore - No types available for multer-storage-cloudinary
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../../configs/cloudinary";
 import AppError from "../errors/AppError";
 import { HTTP_STATUS } from "../constants";
 
-// Configure Cloudinary storage for multer
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "decantifume/products", // Cloudinary folder
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-    transformation: [
-      {
-        width: 1200,
-        height: 1200,
-        crop: "limit",
-        quality: "auto:good",
-        format: "webp",
-      },
-    ],
-  } as any,
-});
+// Configure multer to use memory storage
+const storage = multer.memoryStorage();
 
 // Configure multer
 const upload = multer({
@@ -53,6 +36,47 @@ export const uploadFields = upload.fields([
   { name: "images", maxCount: 8 },
   { name: "thumbnail", maxCount: 1 },
 ]);
+
+// Utility function to upload buffer to Cloudinary
+export const uploadToCloudinary = async (
+  buffer: Buffer,
+  folder: string = "decantifume/products"
+): Promise<string> => {
+  try {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: folder,
+            allowed_formats: ["jpg", "jpeg", "png", "webp"],
+            transformation: [
+              {
+                width: 1200,
+                height: 1200,
+                crop: "limit",
+                quality: "auto:good",
+                format: "webp",
+              },
+            ],
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result!.secure_url);
+            }
+          }
+        )
+        .end(buffer);
+    });
+  } catch (error) {
+    console.error("Error uploading to Cloudinary:", error);
+    throw new AppError(
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      "Failed to upload image to cloud storage"
+    );
+  }
+};
 
 // Utility function to delete image from Cloudinary
 export const deleteFromCloudinary = async (publicId: string): Promise<void> => {

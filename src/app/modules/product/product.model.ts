@@ -1,28 +1,6 @@
 import { Schema, model } from "mongoose";
-import { TProduct, TDecantSize, TFragranceNotes } from "./product.interface";
-import {
-  PRODUCT_CATEGORY,
-  PRODUCT_STATUS,
-  FRAGRANCE_TYPE,
-} from "../../constants";
-
-const fragranceNotesSchema = new Schema<TFragranceNotes>(
-  {
-    top: {
-      type: [String],
-      required: [true, "Top notes are required"],
-    },
-    middle: {
-      type: [String],
-      required: [true, "Middle notes are required"],
-    },
-    base: {
-      type: [String],
-      required: [true, "Base notes are required"],
-    },
-  },
-  { _id: false }
-);
+import { TProduct, TDecantSize } from "./product.interface";
+import { PRODUCT_CATEGORY, PRODUCT_STATUS } from "../../constants";
 
 const decantSizeSchema = new Schema<TDecantSize>(
   {
@@ -74,37 +52,15 @@ const productSchema = new Schema<TProduct>(
       required: [true, "Category is required"],
       enum: Object.values(PRODUCT_CATEGORY),
     },
-    fragranceType: {
-      type: String,
-      required: [true, "Fragrance type is required"],
-      enum: Object.values(FRAGRANCE_TYPE),
-    },
-    gender: {
-      type: String,
-      required: [true, "Gender is required"],
-      enum: ["men", "women", "unisex"],
-    },
-    fragranceNotes: {
-      type: fragranceNotesSchema,
-      required: [true, "Fragrance notes are required"],
-    },
-    longevity: {
-      type: Number,
-      required: [true, "Longevity rating is required"],
-      min: [1, "Longevity must be at least 1"],
-      max: [10, "Longevity cannot exceed 10"],
-    },
-    sillage: {
-      type: Number,
-      required: [true, "Sillage rating is required"],
-      min: [1, "Sillage must be at least 1"],
-      max: [10, "Sillage cannot exceed 10"],
-    },
-    projection: {
-      type: Number,
-      required: [true, "Projection rating is required"],
-      min: [1, "Projection must be at least 1"],
-      max: [10, "Projection cannot exceed 10"],
+    decantSizes: {
+      type: [decantSizeSchema],
+      required: [true, "At least one decant size is required"],
+      validate: {
+        validator: function (sizes: TDecantSize[]) {
+          return sizes.length > 0;
+        },
+        message: "At least one decant size is required",
+      },
     },
     images: {
       type: [String],
@@ -118,17 +74,6 @@ const productSchema = new Schema<TProduct>(
     },
     thumbnail: {
       type: String,
-      required: [true, "Thumbnail image is required"],
-    },
-    decantSizes: {
-      type: [decantSizeSchema],
-      required: [true, "At least one decant size is required"],
-      validate: {
-        validator: function (sizes: TDecantSize[]) {
-          return sizes.length > 0;
-        },
-        message: "At least one decant size is required",
-      },
     },
     status: {
       type: String,
@@ -146,7 +91,6 @@ const productSchema = new Schema<TProduct>(
     },
     slug: {
       type: String,
-      required: [true, "Slug is required"],
       unique: true,
       lowercase: true,
       trim: true,
@@ -154,14 +98,6 @@ const productSchema = new Schema<TProduct>(
     tags: {
       type: [String],
       default: [],
-    },
-    metaTitle: {
-      type: String,
-      maxlength: [60, "Meta title cannot exceed 60 characters"],
-    },
-    metaDescription: {
-      type: String,
-      maxlength: [160, "Meta description cannot exceed 160 characters"],
     },
     averageRating: {
       type: Number,
