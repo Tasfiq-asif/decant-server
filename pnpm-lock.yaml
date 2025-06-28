@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@types/stripe':
+        specifier: ^8.0.417
+        version: 8.0.417(@types/node@20.19.0)
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -41,6 +44,9 @@ importers:
       nodemailer:
         specifier: ^6.9.7
         version: 6.10.1
+      stripe:
+        specifier: ^18.2.1
+        version: 18.2.1(@types/node@20.19.0)
       zod:
         specifier: ^3.22.4
         version: 3.25.64
@@ -339,6 +345,10 @@ packages:
 
   '@types/serve-static@1.15.8':
     resolution: {integrity: sha512-roei0UY3LhpOJvjbIP6ZZFngyLKl5dskOtDhxY5THRSpO+ZI+nzJ+m5yUMzGrp89YRa7lvknKkMYjqQFGwA7Sg==}
+
+  '@types/stripe@8.0.417':
+    resolution: {integrity: sha512-PTuqskh9YKNENnOHGVJBm4sM0zE8B1jZw1JIskuGAPkMB+OH236QeN8scclhYGPA4nG6zTtPXgwpXdp+HPDTVw==}
+    deprecated: This is a stub types definition. stripe provides its own type definitions, so you do not need this installed.
 
   '@types/webidl-conversions@7.0.3':
     resolution: {integrity: sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA==}
@@ -1267,6 +1277,15 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
 
+  stripe@18.2.1:
+    resolution: {integrity: sha512-GwB1B7WSwEBzW4dilgyJruUYhbGMscrwuyHsPUmSRKrGHZ5poSh2oU9XKdii5BFVJzXHn35geRvGJ6R8bYcp8w==}
+    engines: {node: '>=12.*'}
+    peerDependencies:
+      '@types/node': '>=12.x.x'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
@@ -1578,6 +1597,12 @@ snapshots:
       '@types/http-errors': 2.0.5
       '@types/node': 20.19.0
       '@types/send': 0.17.5
+
+  '@types/stripe@8.0.417(@types/node@20.19.0)':
+    dependencies:
+      stripe: 18.2.1(@types/node@20.19.0)
+    transitivePeerDependencies:
+      - '@types/node'
 
   '@types/webidl-conversions@7.0.3': {}
 
@@ -2590,6 +2615,12 @@ snapshots:
       ansi-regex: 5.0.1
 
   strip-json-comments@3.1.1: {}
+
+  stripe@18.2.1(@types/node@20.19.0):
+    dependencies:
+      qs: 6.13.0
+    optionalDependencies:
+      '@types/node': 20.19.0
 
   supports-color@5.5.0:
     dependencies:
