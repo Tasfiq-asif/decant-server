@@ -17,9 +17,8 @@ const shippingAddressValidation = z.object({
   phone: z.string().min(1, "Phone number is required"),
   street: z.string().min(1, "Street address is required").max(200),
   city: z.string().min(1, "City is required").max(100),
-  state: z.string().min(1, "State is required").max(100),
   zipCode: z.string().min(1, "ZIP code is required"),
-  country: z.string().min(1, "Country is required").default("United States"),
+  country: z.string().min(1, "Country is required"),
 });
 
 export const createOrderValidation = z.object({

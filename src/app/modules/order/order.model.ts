@@ -78,12 +78,6 @@ const shippingAddressSchema = new Schema<TShippingAddress>(
       trim: true,
       maxlength: [100, "City cannot exceed 100 characters"],
     },
-    state: {
-      type: String,
-      required: [true, "State is required"],
-      trim: true,
-      maxlength: [100, "State cannot exceed 100 characters"],
-    },
     zipCode: {
       type: String,
       required: [true, "ZIP code is required"],
@@ -93,7 +87,6 @@ const shippingAddressSchema = new Schema<TShippingAddress>(
       type: String,
       required: [true, "Country is required"],
       trim: true,
-      default: "United States",
     },
   },
   { _id: false }
@@ -103,7 +96,6 @@ const orderSchema = new Schema<TOrder>(
   {
     orderNumber: {
       type: String,
-      required: [true, "Order number is required"],
       unique: true,
       trim: true,
     },

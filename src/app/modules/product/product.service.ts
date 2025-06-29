@@ -172,13 +172,18 @@ const getAllProducts = async (query: TProductQuery) => {
     const sort: any = {};
     sort[sortBy] = sortOrder === "asc" ? 1 : -1;
 
-    // Execute query
+    // OPTIMIZED: Improved query with field projection for better performance
+    // Only select fields needed for frontend display
+    const projection =
+      "name brand description category decantSizes images thumbnail status totalStock slug tags averageRating totalReviews createdAt updatedAt";
+
+    // Execute optimized query
     const products = await Product.find(filter)
+      .select(projection) // Use select() method for field projection
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .populate("createdBy", "name email")
-      .populate("updatedBy", "name email");
+      .lean(); // Use lean() for better performance - returns plain objects
 
     const total = await Product.countDocuments(filter);
 
@@ -335,13 +340,18 @@ const deleteProduct = async (id: string): Promise<void> => {
 
 const getFeaturedProducts = async (limit: number = 8): Promise<TProduct[]> => {
   try {
+    // OPTIMIZED: Use lean() and field projection for better performance
+    const projection =
+      "name brand description category decantSizes images thumbnail status totalStock slug tags averageRating totalReviews createdAt updatedAt";
+
     const result = await Product.find({
       status: "active",
       isDeleted: false,
     })
+      .select(projection)
       .sort({ averageRating: -1, createdAt: -1 })
       .limit(limit)
-      .populate("createdBy", "name email");
+      .lean(); // Remove population and use lean() for better performance
 
     return result;
   } catch (error) {
@@ -357,14 +367,19 @@ const getProductsByBrand = async (
   limit: number = 10
 ): Promise<TProduct[]> => {
   try {
+    // OPTIMIZED: Use lean() and field projection for better performance
+    const projection =
+      "name brand description category decantSizes images thumbnail status totalStock slug tags averageRating totalReviews createdAt updatedAt";
+
     const result = await Product.find({
       brand: { $regex: brand, $options: "i" },
       status: "active",
       isDeleted: false,
     })
+      .select(projection)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate("createdBy", "name email");
+      .lean(); // Remove population and use lean() for better performance
 
     return result;
   } catch (error) {
@@ -381,15 +396,20 @@ const getRelatedProducts = async (
   limit: number = 6
 ): Promise<TProduct[]> => {
   try {
+    // OPTIMIZED: Use lean() and field projection for better performance
+    const projection =
+      "name brand description category decantSizes images thumbnail status totalStock slug tags averageRating totalReviews createdAt updatedAt";
+
     const result = await Product.find({
       _id: { $ne: productId },
       category,
       status: "active",
       isDeleted: false,
     })
+      .select(projection)
       .sort({ averageRating: -1, createdAt: -1 })
       .limit(limit)
-      .populate("createdBy", "name email");
+      .lean(); // Remove population and use lean() for better performance
 
     return result;
   } catch (error) {
