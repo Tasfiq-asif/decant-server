@@ -359,6 +359,65 @@ const getOrderStats = async (userId?: string) => {
   );
 };
 
+const getTopProducts = async (limit: number = 10) => {
+  // Only include confirmed/delivered orders for accurate sales data
+  const matchStage = {
+    orderStatus: { $in: ["confirmed", "processing", "shipped", "delivered"] },
+  };
+
+  const topProducts = await Order.aggregate([
+    { $match: matchStage },
+    { $unwind: "$items" },
+    {
+      $group: {
+        _id: {
+          productId: "$items.product",
+          productName: "$items.productName",
+          decantSize: "$items.decantSize",
+        },
+        totalQuantity: { $sum: "$items.quantity" },
+        totalRevenue: { $sum: "$items.totalPrice" },
+        totalOrders: { $sum: 1 },
+        averageOrderQuantity: { $avg: "$items.quantity" },
+        pricePerUnit: { $first: "$items.price" },
+      },
+    },
+    {
+      $lookup: {
+        from: "products",
+        localField: "_id.productId",
+        foreignField: "_id",
+        as: "productInfo",
+      },
+    },
+    {
+      $unwind: {
+        path: "$productInfo",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: "$_id.productId",
+        name: "$_id.productName",
+        decantSize: "$_id.decantSize",
+        brand: "$productInfo.brand",
+        category: "$productInfo.category",
+        image: { $arrayElemAt: ["$productInfo.images", 0] },
+        totalQuantity: 1,
+        totalRevenue: { $round: ["$totalRevenue", 2] },
+        totalOrders: 1,
+        averageOrderQuantity: { $round: ["$averageOrderQuantity", 2] },
+        pricePerUnit: { $round: ["$pricePerUnit", 2] },
+      },
+    },
+    { $sort: { totalQuantity: -1 } },
+    { $limit: limit },
+  ]);
+
+  return topProducts;
+};
+
 export const OrderService = {
   createOrder,
   getOrderById,
@@ -372,4 +431,5 @@ export const OrderService = {
   confirmPayment,
   refundPayment,
   getOrderStats,
+  getTopProducts,
 };

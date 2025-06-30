@@ -1,5 +1,5 @@
-import { TUser } from './user.interface';
-import { User } from './user.model';
+import { TUser } from "./user.interface";
+import { User } from "./user.model";
 
 const createUserIntoDB = async (userData: TUser) => {
   const result = await User.create(userData);
@@ -34,8 +34,44 @@ const deleteUserFromDB = async (id: string) => {
 };
 
 const getUserByEmail = async (email: string) => {
-  const result = await User.findOne({ email, isDeleted: false }).select('+password');
+  const result = await User.findOne({ email, isDeleted: false }).select(
+    "+password"
+  );
   return result;
+};
+
+const getUserStats = async () => {
+  const stats = await User.aggregate([
+    { $match: { isDeleted: false } },
+    {
+      $group: {
+        _id: null,
+        totalUsers: { $sum: 1 },
+        activeUsers: {
+          $sum: { $cond: [{ $eq: ["$isActive", true] }, 1, 0] },
+        },
+        inactiveUsers: {
+          $sum: { $cond: [{ $eq: ["$isActive", false] }, 1, 0] },
+        },
+        adminUsers: {
+          $sum: { $cond: [{ $eq: ["$role", "admin"] }, 1, 0] },
+        },
+        regularUsers: {
+          $sum: { $cond: [{ $eq: ["$role", "user"] }, 1, 0] },
+        },
+      },
+    },
+  ]);
+
+  return (
+    stats[0] || {
+      totalUsers: 0,
+      activeUsers: 0,
+      inactiveUsers: 0,
+      adminUsers: 0,
+      regularUsers: 0,
+    }
+  );
 };
 
 export const UserServices = {
@@ -45,4 +81,5 @@ export const UserServices = {
   updateUserInDB,
   deleteUserFromDB,
   getUserByEmail,
-}; 
+  getUserStats,
+};

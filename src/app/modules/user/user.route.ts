@@ -17,6 +17,8 @@ router.post(
 
 router.get("/", auth(USER_ROLE.ADMIN), UserControllers.getAllUsers);
 
+router.get("/stats", auth(USER_ROLE.ADMIN), UserControllers.getUserStats);
+
 router.delete(
   "/:id",
   auth(USER_ROLE.ADMIN),

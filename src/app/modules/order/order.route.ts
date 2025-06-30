@@ -32,6 +32,8 @@ router.get(
 
 router.get("/stats", auth("user", "admin"), OrderController.getOrderStats);
 
+router.get("/top-products", auth("admin"), OrderController.getTopProducts);
+
 router.get(
   "/order-number/:orderNumber",
   auth("user", "admin"),

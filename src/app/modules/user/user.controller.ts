@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import catchAsync from '../../utils/catchAsync';
-import sendResponse from '../../utils/sendResponse';
-import { UserServices } from './user.service';
-import { HTTP_STATUS } from '../../constants';
+import { Request, Response } from "express";
+import catchAsync from "../../utils/catchAsync";
+import sendResponse from "../../utils/sendResponse";
+import { UserServices } from "./user.service";
+import { HTTP_STATUS } from "../../constants";
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.createUserIntoDB(req.body);
@@ -10,7 +10,7 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.CREATED,
     success: true,
-    message: 'User created successfully',
+    message: "User created successfully",
     data: result,
   });
 });
@@ -21,7 +21,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'Users retrieved successfully',
+    message: "Users retrieved successfully",
     data: result,
   });
 });
@@ -33,7 +33,7 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'User retrieved successfully',
+    message: "User retrieved successfully",
     data: result,
   });
 });
@@ -45,7 +45,7 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'User updated successfully',
+    message: "User updated successfully",
     data: result,
   });
 });
@@ -57,7 +57,18 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'User deleted successfully',
+    message: "User deleted successfully",
+    data: result,
+  });
+});
+
+const getUserStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.getUserStats();
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "User statistics retrieved successfully",
     data: result,
   });
 });
@@ -68,4 +79,5 @@ export const UserControllers = {
   getSingleUser,
   updateUser,
   deleteUser,
-}; 
+  getUserStats,
+};

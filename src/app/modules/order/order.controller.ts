@@ -181,6 +181,18 @@ const getOrderStats = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getTopProducts = catchAsync(async (req: Request, res: Response) => {
+  const limit = parseInt(req.query.limit as string) || 10;
+  const topProducts = await OrderService.getTopProducts(limit);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Top products retrieved successfully",
+    data: topProducts,
+  });
+});
+
 // Stripe webhook handler
 const handleStripeWebhook = catchAsync(async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"] as string;
@@ -231,5 +243,6 @@ export const OrderController = {
   confirmPayment,
   refundPayment,
   getOrderStats,
+  getTopProducts,
   handleStripeWebhook,
 };
