@@ -177,6 +177,7 @@ const getAllOrders = async (query: TOrderQuery) => {
     startDate,
     endDate,
     orderNumber,
+    search,
   } = query;
 
   const filter: any = {};
@@ -186,6 +187,25 @@ const getAllOrders = async (query: TOrderQuery) => {
   if (paymentStatus) filter.paymentStatus = paymentStatus;
   if (paymentMethod) filter.paymentMethod = paymentMethod;
   if (orderNumber) filter.orderNumber = { $regex: orderNumber, $options: "i" };
+
+  // Enhanced search functionality
+  if (search) {
+    const searchConditions: any[] = [
+      { orderNumber: { $regex: search, $options: "i" } },
+      { "shippingAddress.firstName": { $regex: search, $options: "i" } },
+      { "shippingAddress.lastName": { $regex: search, $options: "i" } },
+      { "shippingAddress.email": { $regex: search, $options: "i" } },
+      { "shippingAddress.phone": { $regex: search, $options: "i" } },
+      { "items.productName": { $regex: search, $options: "i" } },
+    ];
+
+    // If search is a number, also search by total amount
+    if (!isNaN(Number(search))) {
+      searchConditions.push({ totalAmount: Number(search) });
+    }
+
+    filter.$or = searchConditions;
+  }
 
   if (startDate || endDate) {
     filter.createdAt = {};

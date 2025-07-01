@@ -87,6 +87,7 @@ export interface TOrderQuery {
   startDate?: string;
   endDate?: string;
   orderNumber?: string;
+  search?: string;
   page?: number;
   limit?: number;
   sortBy?: string;

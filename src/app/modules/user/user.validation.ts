@@ -72,6 +72,21 @@ const getUserByIdValidationSchema = z.object({
   }),
 });
 
+const updateUserRoleValidationSchema = z.object({
+  params: z.object({
+    id: z
+      .string({
+        required_error: "User ID is required",
+      })
+      .min(1, "User ID cannot be empty"),
+  }),
+  body: z.object({
+    role: z.enum([USER_ROLE.USER, USER_ROLE.ADMIN] as [string, ...string[]], {
+      required_error: "Role is required",
+    }),
+  }),
+});
+
 const deleteUserValidationSchema = z.object({
   params: z.object({
     id: z
@@ -85,6 +100,7 @@ const deleteUserValidationSchema = z.object({
 export const UserValidation = {
   createUserValidationSchema,
   updateUserValidationSchema,
+  updateUserRoleValidationSchema,
   getUserByIdValidationSchema,
   deleteUserValidationSchema,
 };

@@ -6,9 +6,66 @@ const createUserIntoDB = async (userData: TUser) => {
   return result;
 };
 
-const getAllUsersFromDB = async () => {
-  const result = await User.find({ isDeleted: false });
-  return result;
+const getAllUsersFromDB = async (query?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  isActive?: boolean;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}) => {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    role,
+    isActive,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = query || {};
+
+  const filter: any = { isDeleted: false };
+
+  // Search functionality
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // Role filter
+  if (role) {
+    filter.role = role;
+  }
+
+  // Active status filter
+  if (typeof isActive === "boolean") {
+    filter.isActive = isActive;
+  }
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const sortOptions: any = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select("-password")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(Number(limit)),
+    User.countDocuments(filter),
+  ]);
+
+  return {
+    users,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      totalPages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 const getSingleUserFromDB = async (id: string) => {
@@ -37,6 +94,15 @@ const getUserByEmail = async (email: string) => {
   const result = await User.findOne({ email, isDeleted: false }).select(
     "+password"
   );
+  return result;
+};
+
+const updateUserRole = async (id: string, role: "user" | "admin") => {
+  const result = await User.findByIdAndUpdate(
+    id,
+    { role },
+    { new: true, runValidators: true }
+  ).select("-password");
   return result;
 };
 
@@ -79,6 +145,7 @@ export const UserServices = {
   getAllUsersFromDB,
   getSingleUserFromDB,
   updateUserInDB,
+  updateUserRole,
   deleteUserFromDB,
   getUserByEmail,
   getUserStats,
