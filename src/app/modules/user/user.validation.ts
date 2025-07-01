@@ -97,19 +97,26 @@ const deleteUserValidationSchema = z.object({
   }),
 });
 
-const addToWishlistValidationSchema = z.object({
+const updateProfileValidationSchema = z.object({
   body: z.object({
-    productId: z.string({
-      required_error: "Product ID is required",
-    }),
-  }),
-});
-
-const removeFromWishlistValidationSchema = z.object({
-  params: z.object({
-    productId: z.string({
-      required_error: "Product ID is required",
-    }),
+    name: z
+      .string()
+      .min(1, "Name cannot be empty")
+      .max(50, "Name cannot exceed 50 characters")
+      .optional(),
+    email: z.string().email("Invalid email format").optional(),
+    phone: z.string().optional(),
+    dateOfBirth: z.string().optional(),
+    address: z
+      .object({
+        street: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+        country: z.string().optional(),
+      })
+      .optional(),
+    profileImg: z.string().url("Invalid profile image URL").optional(),
   }),
 });
 
@@ -119,6 +126,5 @@ export const UserValidation = {
   updateUserRoleValidationSchema,
   getUserByIdValidationSchema,
   deleteUserValidationSchema,
-  addToWishlistValidationSchema,
-  removeFromWishlistValidationSchema,
+  updateProfileValidationSchema,
 };

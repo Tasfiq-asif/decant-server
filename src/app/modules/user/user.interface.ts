@@ -10,6 +10,15 @@ export interface TUser {
   status: string;
   isDeleted: boolean;
   profileImg?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -30,12 +39,4 @@ export interface TAuthUser {
   role: string;
   iat: number;
   exp: number;
-}
-
-export interface IWishlistItem {
-  _id?: string;
-  user: string | Types.ObjectId;
-  product: string | Types.ObjectId;
-  createdAt?: Date;
-  updatedAt?: Date;
 }

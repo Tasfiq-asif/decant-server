@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import { TUser } from "./user.interface";
 import { USER_ROLE, USER_STATUS } from "../../constants";
 import { env } from "../../../configs/envConfig";
-import { IWishlistItem } from "./user.interface";
 
 const userSchema = new Schema<TUser>(
   {
@@ -42,6 +41,36 @@ const userSchema = new Schema<TUser>(
       type: String,
       default: null,
     },
+    phone: {
+      type: String,
+      default: null,
+    },
+    dateOfBirth: {
+      type: String,
+      default: null,
+    },
+    address: {
+      street: {
+        type: String,
+        default: null,
+      },
+      city: {
+        type: String,
+        default: null,
+      },
+      state: {
+        type: String,
+        default: null,
+      },
+      zipCode: {
+        type: String,
+        default: null,
+      },
+      country: {
+        type: String,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,
@@ -64,26 +93,3 @@ userSchema.methods.toJSON = function () {
 };
 
 export const User = model<TUser>("User", userSchema);
-
-const wishlistSchema = new Schema<IWishlistItem>(
-  {
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    product: {
-      type: Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-// Create unique compound index to prevent duplicate wishlist items
-wishlistSchema.index({ user: 1, product: 1 }, { unique: true });
-
-export const Wishlist = model<IWishlistItem>("Wishlist", wishlistSchema);

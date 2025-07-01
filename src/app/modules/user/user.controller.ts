@@ -104,57 +104,37 @@ const getUserDashboard = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const addToWishlist = catchAsync(async (req: Request, res: Response) => {
+const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
-  const { productId } = req.body;
 
   if (!userId) {
     throw new AppError(401, "User not authenticated");
   }
 
-  const result = await UserServices.addToWishlist(userId, productId);
-
-  sendResponse(res, {
-    statusCode: HTTP_STATUS.CREATED,
-    success: true,
-    message: "Product added to wishlist successfully",
-    data: result,
-  });
-});
-
-const removeFromWishlist = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const { productId } = req.params;
-
-  if (!userId) {
-    throw new AppError(401, "User not authenticated");
-  }
-
-  const result = await UserServices.removeFromWishlist(userId, productId);
+  const result = await UserServices.getUserProfile(userId);
 
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: "Product removed from wishlist successfully",
+    message: "Profile retrieved successfully",
     data: result,
   });
 });
 
-const getUserWishlist = catchAsync(async (req: Request, res: Response) => {
+const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
   if (!userId) {
     throw new AppError(401, "User not authenticated");
   }
 
-  const result = await UserServices.getUserWishlist(userId, req.query);
+  const result = await UserServices.updateUserProfile(userId, req.body);
 
   sendResponse(res, {
     statusCode: HTTP_STATUS.OK,
     success: true,
-    message: "Wishlist retrieved successfully",
-    data: result.wishlist,
-    meta: result.pagination,
+    message: "Profile updated successfully",
+    data: result,
   });
 });
 
@@ -167,7 +147,6 @@ export const UserControllers = {
   deleteUser,
   getUserStats,
   getUserDashboard,
-  addToWishlist,
-  removeFromWishlist,
-  getUserWishlist,
+  getUserProfile,
+  updateUserProfile,
 };

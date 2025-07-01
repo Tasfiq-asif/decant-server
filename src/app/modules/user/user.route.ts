@@ -40,25 +40,18 @@ router.get(
   UserControllers.getUserDashboard
 );
 
-// Wishlist routes (must come before /:id to avoid conflicts)
-router.post(
-  "/wishlist",
-  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
-  validateRequest(UserValidation.addToWishlistValidationSchema),
-  UserControllers.addToWishlist
-);
-
+// Profile routes (must come before /:id to avoid conflicts)
 router.get(
-  "/wishlist",
+  "/profile",
   auth(USER_ROLE.USER, USER_ROLE.ADMIN),
-  UserControllers.getUserWishlist
+  UserControllers.getUserProfile
 );
 
-router.delete(
-  "/wishlist/:productId",
+router.patch(
+  "/profile",
   auth(USER_ROLE.USER, USER_ROLE.ADMIN),
-  validateRequest(UserValidation.removeFromWishlistValidationSchema),
-  UserControllers.removeFromWishlist
+  validateRequest(UserValidation.updateProfileValidationSchema),
+  UserControllers.updateUserProfile
 );
 
 // User and Admin routes
