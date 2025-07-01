@@ -1,26 +1,27 @@
-import { Schema, model } from 'mongoose';
-import bcrypt from 'bcryptjs';
-import { TUser } from './user.interface';
-import { USER_ROLE, USER_STATUS } from '../../constants';
-import { env } from '../../../configs/envConfig';
+import { Schema, model } from "mongoose";
+import bcrypt from "bcryptjs";
+import { TUser } from "./user.interface";
+import { USER_ROLE, USER_STATUS } from "../../constants";
+import { env } from "../../../configs/envConfig";
+import { IWishlistItem } from "./user.interface";
 
 const userSchema = new Schema<TUser>(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [true, "Password is required"],
       select: false,
     },
     role: {
@@ -48,9 +49,9 @@ const userSchema = new Schema<TUser>(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   this.password = await bcrypt.hash(this.password, env.BCRYPT_SALT_ROUNDS);
   next();
 });
@@ -62,4 +63,27 @@ userSchema.methods.toJSON = function () {
   return userObj;
 };
 
-export const User = model<TUser>('User', userSchema); 
+export const User = model<TUser>("User", userSchema);
+
+const wishlistSchema = new Schema<IWishlistItem>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Create unique compound index to prevent duplicate wishlist items
+wishlistSchema.index({ user: 1, product: 1 }, { unique: true });
+
+export const Wishlist = model<IWishlistItem>("Wishlist", wishlistSchema);

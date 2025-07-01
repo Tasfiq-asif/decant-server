@@ -1,5 +1,6 @@
 import { TUser } from "./user.interface";
-import { User } from "./user.model";
+import { User, Wishlist } from "./user.model";
+import AppError from "../../errors/AppError";
 
 const createUserIntoDB = async (userData: TUser) => {
   const result = await User.create(userData);
@@ -140,6 +141,128 @@ const getUserStats = async () => {
   );
 };
 
+// Wishlist Services
+const addToWishlist = async (userId: string, productId: string) => {
+  try {
+    const wishlistItem = await Wishlist.create({
+      user: userId,
+      product: productId,
+    });
+
+    const result = await Wishlist.findById(wishlistItem._id).populate(
+      "product"
+    );
+    return result;
+  } catch (error: any) {
+    if (error.code === 11000) {
+      throw new AppError(400, "Product already in wishlist");
+    }
+    throw error;
+  }
+};
+
+const removeFromWishlist = async (userId: string, productId: string) => {
+  const result = await Wishlist.findOneAndDelete({
+    user: userId,
+    product: productId,
+  });
+
+  if (!result) {
+    throw new AppError(404, "Item not found in wishlist");
+  }
+
+  return result;
+};
+
+const getUserWishlist = async (userId: string, queryObj: any) => {
+  const page = Number(queryObj.page) || 1;
+  const limit = Number(queryObj.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const wishlist = await Wishlist.find({ user: userId })
+    .populate("product")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await Wishlist.countDocuments({ user: userId });
+
+  return {
+    wishlist,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+const getWishlistCount = async (userId: string) => {
+  return await Wishlist.countDocuments({ user: userId });
+};
+
+// User Dashboard Service
+const getUserDashboardData = async (userId: string) => {
+  try {
+    // Import Order model dynamically to avoid circular dependency
+    const OrderModel = await import("../order/order.model");
+    const Order = OrderModel.Order;
+
+    // Get order stats
+    const totalOrders = await Order.countDocuments({ user: userId });
+    const pendingOrders = await Order.countDocuments({
+      user: userId,
+      orderStatus: { $in: ["pending", "confirmed", "processing"] },
+    });
+
+    // Get wishlist count
+    const wishlistCount = await getWishlistCount(userId);
+
+    // Get recent orders (last 5)
+    const recentOrders = await Order.find({ user: userId })
+      .populate("items.product", "name image")
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select("orderNumber items totalAmount orderStatus createdAt");
+
+    // Get wishlist items (last 5)
+    const wishlistItems = await Wishlist.find({ user: userId })
+      .populate("product", "name price image")
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    return {
+      totalOrders,
+      pendingOrders,
+      wishlistCount,
+      recentOrders: recentOrders.map((order) => ({
+        id: order.orderNumber,
+        productName: order.items[0]?.productName || "Multiple Items",
+        amount: order.totalAmount,
+        status: order.orderStatus,
+        date: order.createdAt?.toISOString().split("T")[0] || "",
+      })),
+      wishlistItems: wishlistItems.map((item) => ({
+        id: item._id,
+        name: (item.product as any)?.name || "Unknown Product",
+        price: (item.product as any)?.price || 0,
+        image: (item.product as any)?.image,
+      })),
+    };
+  } catch (error) {
+    console.error("Error in getUserDashboardData:", error);
+    // Return default data if there's an error
+    return {
+      totalOrders: 0,
+      pendingOrders: 0,
+      wishlistCount: 0,
+      recentOrders: [],
+      wishlistItems: [],
+    };
+  }
+};
+
 export const UserServices = {
   createUserIntoDB,
   getAllUsersFromDB,
@@ -149,4 +272,9 @@ export const UserServices = {
   deleteUserFromDB,
   getUserByEmail,
   getUserStats,
+  addToWishlist,
+  removeFromWishlist,
+  getUserWishlist,
+  getWishlistCount,
+  getUserDashboardData,
 };

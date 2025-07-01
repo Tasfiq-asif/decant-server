@@ -1,4 +1,5 @@
-import { USER_ROLE, USER_STATUS } from '../../constants';
+import { USER_ROLE, USER_STATUS } from "../../constants";
+import { Types } from "mongoose";
 
 export interface TUser {
   _id?: string;
@@ -29,4 +30,12 @@ export interface TAuthUser {
   role: string;
   iat: number;
   exp: number;
-} 
+}
+
+export interface IWishlistItem {
+  _id?: string;
+  user: string | Types.ObjectId;
+  product: string | Types.ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

@@ -33,6 +33,34 @@ router.delete(
   UserControllers.deleteUser
 );
 
+// User dashboard route (must come before /:id to avoid conflicts)
+router.get(
+  "/dashboard",
+  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  UserControllers.getUserDashboard
+);
+
+// Wishlist routes (must come before /:id to avoid conflicts)
+router.post(
+  "/wishlist",
+  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  validateRequest(UserValidation.addToWishlistValidationSchema),
+  UserControllers.addToWishlist
+);
+
+router.get(
+  "/wishlist",
+  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  UserControllers.getUserWishlist
+);
+
+router.delete(
+  "/wishlist/:productId",
+  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  validateRequest(UserValidation.removeFromWishlistValidationSchema),
+  UserControllers.removeFromWishlist
+);
+
 // User and Admin routes
 router.get(
   "/:id",

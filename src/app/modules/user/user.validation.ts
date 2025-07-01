@@ -97,10 +97,28 @@ const deleteUserValidationSchema = z.object({
   }),
 });
 
+const addToWishlistValidationSchema = z.object({
+  body: z.object({
+    productId: z.string({
+      required_error: "Product ID is required",
+    }),
+  }),
+});
+
+const removeFromWishlistValidationSchema = z.object({
+  params: z.object({
+    productId: z.string({
+      required_error: "Product ID is required",
+    }),
+  }),
+});
+
 export const UserValidation = {
   createUserValidationSchema,
   updateUserValidationSchema,
   updateUserRoleValidationSchema,
   getUserByIdValidationSchema,
   deleteUserValidationSchema,
+  addToWishlistValidationSchema,
+  removeFromWishlistValidationSchema,
 };

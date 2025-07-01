@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { UserServices } from "./user.service";
 import { HTTP_STATUS } from "../../constants";
+import AppError from "../../errors/AppError";
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.createUserIntoDB(req.body);
@@ -87,6 +88,76 @@ const getUserStats = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUserDashboard = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    throw new AppError(401, "User not authenticated");
+  }
+
+  const result = await UserServices.getUserDashboardData(userId);
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Dashboard data retrieved successfully",
+    data: result,
+  });
+});
+
+const addToWishlist = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { productId } = req.body;
+
+  if (!userId) {
+    throw new AppError(401, "User not authenticated");
+  }
+
+  const result = await UserServices.addToWishlist(userId, productId);
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.CREATED,
+    success: true,
+    message: "Product added to wishlist successfully",
+    data: result,
+  });
+});
+
+const removeFromWishlist = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { productId } = req.params;
+
+  if (!userId) {
+    throw new AppError(401, "User not authenticated");
+  }
+
+  const result = await UserServices.removeFromWishlist(userId, productId);
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Product removed from wishlist successfully",
+    data: result,
+  });
+});
+
+const getUserWishlist = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new AppError(401, "User not authenticated");
+  }
+
+  const result = await UserServices.getUserWishlist(userId, req.query);
+
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: "Wishlist retrieved successfully",
+    data: result.wishlist,
+    meta: result.pagination,
+  });
+});
+
 export const UserControllers = {
   createUser,
   getAllUsers,
@@ -95,4 +166,8 @@ export const UserControllers = {
   updateUserRole,
   deleteUser,
   getUserStats,
+  getUserDashboard,
+  addToWishlist,
+  removeFromWishlist,
+  getUserWishlist,
 };
